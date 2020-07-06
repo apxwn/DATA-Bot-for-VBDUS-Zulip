@@ -3,6 +3,7 @@
  
  Setup:
  - Einrichtung eines Outgoing webhook Bots mit Endpunkt [Uri]/datahook.php
+ 
  Variablendefinitionen in datahook-secrets.php:
  - $bot_email = E-Mail-Adresse des Bots
  - $spreadsheet_id = ID des Google Spreadsheets

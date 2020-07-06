@@ -19,7 +19,7 @@ ini_set('error_log', __DIR__ . '/datahook-php_errors.log');
 header('Content-Type: application/json');
 $anfrage = json_decode(file_get_contents('php://input'), true);
 
-include('./secrets.php');
+include('./datahook-secrets.php');
 
 if ($anfrage['bot_email'] != $bot_email) {
     $log->lwrite('Nicht autorisierter Zugriff auf Datahook.');

@@ -191,9 +191,7 @@ foreach ($resultate as $key=>$zeile) {
 }
 
     $data_a = bin2hex(random_bytes(8));
-    $data_date = new DateTime('NOW');
-    $data_fname = "data" . $anrede[0] . "_" . $anrede[1] . $data_b . "@" . $data_a;
-    $data_b = $data_date->format('Y-m-dTHis');
+    $data_fname = "data_" . $anrede[0] . "_" . $anrede[1] . "@" . $data_a;
     $data_fpath = __DIR__ . "/datahook/" . $data_fname . ".json";
     file_put_contents($data_fpath, json_encode($data_extern));
 

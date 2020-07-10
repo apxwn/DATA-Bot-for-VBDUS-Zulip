@@ -118,11 +118,12 @@ if (preg_match('/statistik/i', $anfrage['message']['content']) === 1) {  // Test
         }
         $resultate = array();
         $sprachstatistik = array();
+
         foreach ($values as $nummer => $zeile) {
         	if (empty($zeile[2])) { continue; }  // kein Name
         	if ($zeile[4] == "TRUE") { continue; }  // will/soll nicht vermittelt werden
-       		$sprachspalte = preg_replace('/[\d[:punct:]]+/u', ' ', $zeile[0]);
-       		$sprachspalte = trim(preg_replace(array('/\s+/','/\n\r+/'), ' ', $sprachspalte));
+       		$sprachspalte = preg_replace('/[\d[:punct:]]+/u', ' ', $zeile[0]);  // Sonderzeichen zu Space
+       		$sprachspalte = trim(preg_replace(array('/\s+/','/\n\r+/'), ' ', $sprachspalte));  // mehrere Spaces weg
        		$zeilenspracharray = explode(' ', $sprachspalte);  // $zeilenspracharray[0] enthält die Sprache der Tabellenzeile
         	$zeilensprache = strtolower($zeilenspracharray[0]);
         	if ( strpos(strtolower($anfrage['message']['content']), $zeilensprache) !== false ) {  // gefunden
@@ -131,7 +132,7 @@ if (preg_match('/statistik/i', $anfrage['message']['content']) === 1) {  // Test
         			array_push($sprachstatistik, $zeile[0]);
         		}
        		}
-       	}
+           	}
 	$suffix = 'Die komplette aktuelle Tabelle findest Du als Dateianhang in der letzten Nachricht im [Thema "Liste Rufbereitschaft"](https://team.beeidigte-dolmetscher.de/#narrow/stream/6-Rufbereitschaft/topic/Liste.20Rufbereitschaft) im Stream #**Rufbereitschaft**.';
 	if (empty($resultate)) {
 		$antwort = "Hallo " . $anrede[0] . ", die Suche in der Region **" . $zielblattname . "** hat leider keine Ergebnisse geliefert.\r\n\r\n" . $suffix;
@@ -149,12 +150,16 @@ $fussnoten = "";
 $fn = 1;
 $resultatetabelle = "Sprache | Name | Telefon | Mobil | Aktuelles | Bemerkungen\r\n--- | --- | --- | --- | --- | ---\r\n";
 
+  $data_extern = array( 'rufbname' => $anrede[0], 'region' => $zielblattname, 'ergebnisse' => array());
+  $data_i = 0;
 foreach ($resultate as $key=>$zeile) {
 	$zeile[0] = preg_replace('/[\d[:punct:]]+/u', ' ', $zeile[0]);
     $zeile[0] = trim(preg_replace(array('/\s+/','/\n\r+/'), ' ', $zeile[0]));
     $zeilenspracharray = explode(' ', $zeile[0]);  // $zeilenspracharray[0] enthält die Sprache der Tabellenzeile
     $zeilensprache = $zeilenspracharray[0];
     $eintrag .= $zeilensprache . " | ";
+      $data_ii = strval($data_i);
+      $data_extern['ergebnisse'][$data_ii]['zeilensprache'] = $zeilensprache;
 
 	if ($zeile[6] == "TRUE" && $zeile[7] == "TRUE") { $status = "§DÜ"; }
 	elseif ($zeile[6] == "TRUE" && $zeile[7] == "FALSE") { $status = "§D"; }
@@ -162,23 +167,38 @@ foreach ($resultate as $key=>$zeile) {
 	else { $status = ""; }
 
 	$eintrag .= $status . " **" . mb_strtoupper($zeile[2]) . "** " . $zeile[3];  // **NAME** Vorname
+      $data_extern['ergebnisse'][$data_ii]['name'] = $status . " " . mb_strtoupper($zeile[2]) . " " . $zeile[3];
 	if ( $zeile[16] && $zeile[16] !== "" && strpos(strtolower($zielblattname), strtolower(substr($zeile[16],0,5))) === false ) {  // Falls Ort 1) vorhanden, 2) nicht gleich Tabellenblatt:
 		$eintrag .= " (" . $zeile[16] . ")";
+      $data_extern['ergebnisse'][$data_i]['name'] = $data_extern['ergebnisse'][$data_i]['name'] . " (" . $zeile[16] . ")";
 	}
   $telefon = removeNbsp($zeile[11]);
+      $data_extern['ergebnisse'][$data_ii]['telefon'] = $telefon;
   $mobil = removeNbsp($zeile[13]);
+      $data_extern['ergebnisse'][$data_ii]['mobil'] = $mobil;
 	$eintrag .= " | " . $telefon . " | " . $mobil . " | " . $zeile[1];
   if ($zeile[1]) {  // falls "Aktuelles" gesetzt ist, Hinweis setzen und Fußnote bauen
     $fussnoten .= "(" . $fn . ") - " . $zeile[9] . "\r\n";
     $eintrag .= " (" . $fn . ")";
     $fn++;
+      $data_extern['ergebnisse'][$data_ii]['aktuelles'] = $zeile[9];
   }
   $eintrag .= " | " . trim(preg_replace(array('/\s+/','/\n\r+/'), ' ', $zeile[10])) . "\r\n";  // Bemerkungen bereinigen
+      $data_extern['ergebnisse'][$data_ii]['bemerkungen'] = trim(preg_replace(array('/\s+/','/\n\r+/'), ' ', $zeile[10]));
 	$resultatetabelle .= $eintrag;
 	$eintrag = "";
+      $data_i++;
 }
 
+    $data_a = bin2hex(random_bytes(8));
+    $data_date = new DateTime('NOW');
+    $data_fname = "data" . $anrede[0] . "_" . $anrede[1] . $data_b . "@" . $data_a;
+    $data_b = $data_date->format('Y-m-dTHis');
+    $data_fpath = __DIR__ . "/datahook/" . $data_fname . ".json";
+    file_put_contents($data_fpath, json_encode($data_extern));
+
 	$prefix = "Hallo " . $anrede[0] . ", die Suche in der Region **" . $zielblattname . "** ergab Folgendes:\r\n\r\n";
+  $prefix .= "[(hier klicken für externe Ansicht der Ergebnisse)](http://rb.beeidigte-dolmetscher.de/_einsaetze/datahook-extern.php?f=" . $data_fname . ")\r\n\r\n";
 	$antwort = $prefix . $resultatetabelle . "\r\n" . $fussnoten . "\r\n" . $suffix . "\r\n";
     $log->lwrite ("Suche liefert " . count($resultate) . " Ergebnisse.");
 

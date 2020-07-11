@@ -29,7 +29,7 @@ $data = json_decode($strJsonFileContents, true);
 foreach ($data['ergebnisse'] as $key => $ergebnis) {
   $output = '<div class="col-md-12"><div class="table-responsive"><table class="table table-bordered "><thead class="thead-dark"><tr><th style="width: 20%;" scope="col"><strong>' . strtoupper($ergebnis['zeilensprache']) . '</strong></th><th scope="col">' . $ergebnis['name'] . '</th></tr></thead>';
   $output .= '<tbody><tr><th scope="row">Telefon</th><td><a href="tel:' . preg_replace('/[^0-9+]+/', '', $ergebnis['telefon']) . '">' . $ergebnis['telefon'] . '</a></td></tr>';
-  $output .= '<tbody><tr><th scope="row">Mobil</th><td><a href="tel:' . preg_replace('/[^0-9+]+/', '', $ergebnis['mobil']) . '">' . $ergebnis['mobil'] . '</a></td></tr>';
+  $output .= '<tr><th scope="row">Mobil</th><td><a href="tel:' . preg_replace('/[^0-9+]+/', '', $ergebnis['mobil']) . '">' . $ergebnis['mobil'] . '</a></td></tr>';
   $output .= '<tr><th scope="row">Aktuelles</th><td>';
   	if ($ergebnis['aktuelles']) {
   		$output .= '<mark>' . $ergebnis['aktuelles'] . '</mark>';
